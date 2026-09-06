@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Генератор шаблона коробки — DXF</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f8fafc;
+    --card: #ffffff;
+    --border: #e2e8f0;
+    --text: #0f172a;
+    --muted: #64748b;
+    --accent: #2563eb;
+    --accent-hover: #1d4ed8;
+    --green: #16a34a;
+    --green-hover: #15803d;
+    --radius: 8px;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+  }
+  header h1 { font-size: 1.4rem; font-weight: 700; }
+  header p { font-size: .85rem; color: var(--muted); margin-top: 2px; }
+
+  main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 330px 1fr;
+    gap: 20px;
+    max-width: 1280px;
+    width: 100%;
+    padding: 20px 24px;
+    margin: 0 auto;
+  }
+  @media (max-width: 900px) {
+    main { grid-template-columns: 1fr; }
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .card-header {
+    padding: 14px 18px 10px;
+    font-weight: 600;
+    font-size: .95rem;
+  }
+  .card-body { padding: 6px 18px 18px; }
+
+  .section-label {
+    font-size: .7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  label {
+    display: block;
+    font-size: .78rem;
+    color: var(--muted);
+    margin-bottom: 3px;
+  }
+  input[type=number] {
+    width: 100%;
+    height: 36px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0 10px;
+    font-size: .9rem;
+    outline: none;
+    transition: border-color .15s;
+  }
+  input[type=number]:focus { border-color: var(--accent); }
+  .unit { font-size: .7rem; color: #94a3b8; margin-top: 2px; }
+
+  .sep { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
+
+  .info {
+    background: #f1f5f9;
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: .78rem;
+    color: #475569;
+    line-height: 1.7;
+  }
+  .info b { color: #334155; }
+
+  /* ── Product section ── */
+  .product-card {
+    background: linear-gradient(135deg, #f0fdf4, #ecfdf5);
+    border: 1px solid #bbf7d0;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 2px;
+  }
+  .product-card .section-label { color: var(--green); }
+  .product-card input[type=number]:focus { border-color: var(--green); }
+  .auto-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 34px;
+    padding: 0 14px;
+    border-radius: 6px;
+    font-size: .82rem;
+    font-weight: 600;
+    border: 1px solid var(--green);
+    background: var(--green);
+    color: #fff;
+    cursor: pointer;
+    transition: all .15s;
+    width: 100%;
+    margin-top: 8px;
+  }
+  .auto-btn:hover { background: var(--green-hover); }
+  .padding-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  /* ── 3D box preview ── */
+  .box3d-card {
+    background: linear-gradient(135deg, #eff6ff, #f0fdf4);
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+  }
+  .box3d-card svg { display: block; margin: 0 auto; }
+  .inner-dims {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 10px;
+  }
+  .dim-chip {
+    background: #fff;
+    border: 1px solid #93c5fd;
+    border-radius: 6px;
+    padding: 6px 12px;
+    text-align: center;
+  }
+  .dim-chip .val {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .dim-chip .lbl {
+    font-size: .65rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 40px;
+    padding: 0 16px;
+    border-radius: 6px;
+    font-size: .88rem;
+    font-weight: 500;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all .15s;
+    width: 100%;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-outline { background: var(--card); color: var(--text); border-color: var(--border); }
+  .btn-outline:hover { background: #f1f5f9; }
+  .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    font-size: .75rem;
+    color: var(--muted);
+    margin-bottom: 10px;
+    align-items: center;
+  }
+  .legend-item { display: flex; align-items: center; gap: 5px; }
+  .swatch { width: 18px; height: 12px; border-radius: 3px; border: 1px solid rgba(0,0,0,.15); }
+  .line-sample { width: 24px; height: 0; border-top: 2px solid; }
+  .line-dash { border-top-style: dashed; }
+
+  .svg-wrap {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: auto;
+    max-height: 600px;
+  }
+  .svg-wrap svg { display: block; width: 100%; height: auto; }
+  .tmpl-size { font-size: .72rem; color: #94a3b8; margin-top: 6px; }
+
+  footer {
+    margin-top: auto;
+    border-top: 1px solid var(--border);
+    padding: 10px;
+    text-align: center;
+    font-size: .75rem;
+    color: #94a3b8;
+  }
+
+  .toast {
+    position: fixed; bottom: 20px; right: 20px;
+    background: #1e293b; color: #fff;
+    padding: 12px 20px; border-radius: 8px;
+    font-size: .85rem; opacity: 0;
+    transform: translateY(12px); transition: all .25s;
+    pointer-events: none; z-index: 999;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>✂️ Генератор шаблона коробки</h1>
+  <p>Крестообразная заготовка из картона с крышкой → DXF для лазерной резки</p>
+</header>
+
+<main>
+  <!-- settings -->
+  <div class="card" style="height:fit-content">
+    <div class="card-header">Параметры коробки</div>
+    <div class="card-body">
+
+      <!-- Габариты товара -->
+      <div class="product-card">
+        <div class="section-label">📦 Габариты товара</div>
+        <div class="row3">
+          <div><label>Длина</label><input type="number" id="prodL" value="180" min="10"><div class="unit">мм</div></div>
+          <div><label>Ширина</label><input type="number" id="prodW" value="120" min="10"><div class="unit">мм</div></div>
+          <div><label>Высота</label><input type="number" id="prodH" value="80" min="5"><div class="unit">мм</div></div>
+        </div>
+        <div class="padding-row">
+          <div><label>Зазор по L и W</label><input type="number" id="padSide" value="5" min="0" step="1"><div class="unit">мм с каждой стороны</div></div>
+          <div><label>Зазор сверху</label><input type="number" id="padTop" value="5" min="0" step="1"><div class="unit">мм</div></div>
+        </div>
+        <button class="auto-btn" onclick="autoCalc()">📐 Подобрать размер коробки</button>
+      </div>
+
+      <hr class="sep">
+
+      <div class="section-label">Внутренние размеры коробки</div>
+      <div class="row3">
+        <div><label>Длина</label><input type="number" id="inL" value="200" min="30"><div class="unit">мм</div></div>
+        <div><label>Ширина</label><input type="number" id="inW" value="150" min="30"><div class="unit">мм</div></div>
+        <div><label>Высота</label><input type="number" id="inH" value="100" min="15"><div class="unit">мм</div></div>
+      </div>
+
+      <hr class="sep">
+
+      <div class="section-label">Материал и крышка</div>
+      <div class="row3">
+        <div><label>Толщина картона</label><input type="number" id="inT" value="3" min="0.5" max="15" step="0.5"><div class="unit">мм</div></div>
+        <div><label>Высота крышки</label><input type="number" id="inLH" value="35" min="10"><div class="unit">мм</div></div>
+        <div><label>Зазор крышки</label><input type="number" id="inC" value="0.5" min="0" max="5" step="0.1"><div class="unit">мм на сторону</div></div>
+      </div>
+
+      <hr class="sep">
+
+      <!-- 3D box with internal dimensions -->
+      <div class="box3d-card">
+        <svg id="box3d" width="260" height="160"></svg>
+        <div class="inner-dims">
+          <div class="dim-chip"><div class="val" id="dimL">200</div><div class="lbl">Длина, мм</div></div>
+          <div class="dim-chip"><div class="val" id="dimW">150</div><div class="lbl">Ширина, мм</div></div>
+          <div class="dim-chip"><div class="val" id="dimH">100</div><div class="lbl">Высота, мм</div></div>
+        </div>
+      </div>
+
+      <hr class="sep">
+
+      <div class="info" id="info"></div>
+
+      <hr class="sep">
+
+      <button class="btn btn-primary" onclick="download('both')">📥 Скачать DXF — коробка + крышка</button>
+      <div class="btn-row">
+        <button class="btn btn-outline" onclick="download('box')">Только коробка</button>
+        <button class="btn btn-outline" onclick="download('lid')">Только крышка</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- preview -->
+  <div class="card">
+    <div class="card-header">Предпросмотр шаблона</div>
+    <div class="card-body">
+      <div class="legend">
+        <span class="legend-item"><span class="swatch" style="background:rgba(37,99,235,.15);border-color:rgba(37,99,235,.4)"></span>Дно</span>
+        <span class="legend-item"><span class="swatch" style="background:rgba(22,163,74,.12);border-color:rgba(22,163,74,.35)"></span>Стенки</span>
+        <span class="legend-item"><span class="line-sample line-dash" style="border-color:#dc2626"></span>Сгиб</span>
+        <span class="legend-item"><span class="line-sample" style="border-color:#0f172a"></span>Рез</span>
+      </div>
+      <div class="svg-wrap"><svg id="svg"></svg></div>
+      <div class="tmpl-size" id="sizeInfo"></div>
+    </div>
+  </div>
+</main>
+
+<footer>Все размеры в миллиметрах · DXF: слой CUT — линии реза, слой SCORE — линии сгиба</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ═══════════════════════ GEOMETRY (без клапанов) ═══════════════════════ */
+
+function templateGeometry(L, W, H) {
+  // Крестообразная заготовка: дно + 4 стенки, без клапанов
+  // 12 точек: по 3 на каждую «ступеньку» креста
+  var outer = [
+    [0, W+H],             // 0  верх-лево передней стенки
+    [L, W+H],             // 1  верх-право передней стенки
+    [L, W],               // 2  внутренний угол: передняя → правая
+    [L+H, W],             // 3  верх-право правой стенки
+    [L+H, 0],             // 4  низ-право правой стенки
+    [L, 0],               // 5  внутренний угол: правая → задняя
+    [L, -H],              // 6  низ-право задней стенки
+    [0, -H],              // 7  низ-лево задней стенки
+    [0, 0],               // 8  внутренний угол: задняя → левая
+    [-H, 0],              // 9  низ-лево левой стенки
+    [-H, W],              // 10 верх-лево левой стенки
+    [0, W]                // 11 внутренний угол: левая → передняя
+  ];
+
+  // Линии сгиба: только между дном и стенками
+  var folds = [
+    [0, 0, 0, W],         // дно ↔ левая стенка
+    [L, 0, L, W],         // дно ↔ правая стенка
+    [0, W, L, W],         // дно ↔ передняя стенка
+    [0, 0, L, 0]          // дно ↔ задняя стенка
+  ];
+
+  var panels = [
+    {p:[[0,0],[L,0],[L,W],[0,W]],               lb:'Дно',      t:'bottom'},
+    {p:[[0,W],[L,W],[L,W+H],[0,W+H]],           lb:'Передняя', t:'side'},
+    {p:[[0,-H],[L,-H],[L,0],[0,0]],             lb:'Задняя',   t:'side'},
+    {p:[[-H,0],[0,0],[0,W],[-H,W]],             lb:'Левая',    t:'side'},
+    {p:[[L,0],[L+H,0],[L+H,W],[L,W]],           lb:'Правая',   t:'side'}
+  ];
+
+  return {
+    outer: outer,
+    folds: folds,
+    panels: panels,
+    w: L + 2*H,
+    h: W + 2*H,
+    minX: -H,
+    minY: -H,
+    maxY: W + H
+  };
+}
+
+/* ═══════════════════════ DXF (по формату detail-export.js) ═══════════════════════ */
+
+function isClockwise(points) {
+    var sum = 0;
+    for (var i = 0; i < points.length; i++) {
+        var p1 = points[i], p2 = points[(i + 1) % points.length];
+        sum += (p2.x - p1.x) * (p2.y + p1.y);
+    }
+    return sum > 0;
+}
+
+function n(v) {
+    v = Number(v);
+    if (!isFinite(v)) v = 0;
+    return parseFloat(v.toFixed(6)).toString();
+}
+
+// Добавляет сущности одного шаблона в массив dxf (без HEADER/TABLES)
+function addTemplateEntities(dxf, tmpl, ox, oy) {
+  var verts = tmpl.outer.map(function(pt){ return { x: pt[0]+ox, y: pt[1]+oy }; });
+  if (isClockwise(verts)) verts.reverse();
+
+  dxf.push("0","LWPOLYLINE","8","CUT","90",String(verts.length),"70","1");
+  for (var i = 0; i < verts.length; i++) {
+    dxf.push("10", n(verts[i].x), "20", n(verts[i].y));
+  }
+
+  for (var j = 0; j < tmpl.folds.length; j++) {
+    var f = tmpl.folds[j];
+    dxf.push(
+      "0","LINE","8","SCORE",
+      "10", n(f[0]+ox), "20", n(f[1]+oy), "30","0",
+      "11", n(f[2]+ox), "21", n(f[3]+oy), "31","0"
+    );
+  }
+}
+
+// Полный DXF — один HEADER, один ENTITIES, один EOF
+function buildDXF(templates) {
+  // templates: [{tmpl, ox, oy}, ...]
+  var dxf = [];
+
+  // ══ HEADER ══
+  dxf.push("0","SECTION","2","HEADER");
+  dxf.push("9","$ACADVER","1","AC1009");
+  dxf.push("9","$INSUNITS","70","4");
+  dxf.push("9","$HANDSEED","5","FFFF");
+  dxf.push("0","ENDSEC");
+
+  // ══ TABLES ══
+  dxf.push("0","SECTION","2","TABLES");
+
+  // LTYPE table — только CONTINUOUS (как в reference)
+  dxf.push("0","TABLE","2","LTYPE","70","1");
+  dxf.push("0","LTYPE","2","CONTINUOUS","70","0","3","Solid line","72","65","73","0","40","0");
+  dxf.push("0","ENDTAB");
+
+  // LAYER table — 3 слоя: 0, CUT, SCORE
+  dxf.push("0","TABLE","2","LAYER","70","3");
+  dxf.push("0","LAYER","2","0","70","0","62","7","6","CONTINUOUS");
+  dxf.push("0","LAYER","2","CUT","70","0","62","7","6","CONTINUOUS");
+  dxf.push("0","LAYER","2","SCORE","70","0","62","1","6","CONTINUOUS");
+  dxf.push("0","ENDTAB");
+
+  // STYLE table
+  dxf.push("0","TABLE","2","STYLE","70","1");
+  dxf.push("0","STYLE","2","STANDARD","70","0","40","0","41","1","50","0","71","0","42","5","3","txt","4","");
+  dxf.push("0","ENDTAB");
+
+  dxf.push("0","ENDSEC");
+
+  // ══ ENTITIES ══
+  dxf.push("0","SECTION","2","ENTITIES");
+  for (var i = 0; i < templates.length; i++) {
+    var t = templates[i];
+    addTemplateEntities(dxf, t.tmpl, t.ox, t.oy);
+  }
+  dxf.push("0","ENDSEC");
+  dxf.push("0","EOF");
+
+  return dxf.join("\n");
+}
+
+/* ═══════════════════════ 3D BOX PREVIEW ═══════════════════════ */
+
+function render3DBox(L, W, H, T) {
+  var svg = document.getElementById('box3d');
+  var ax = 0.866, ay = 0.5;
+  var sc = Math.min(0.55, 120 / Math.max(L, W, H));
+
+  function proj(x, y, z) {
+    return [
+      130 + (x - y) * ax * sc,
+      110 + (x + y) * ay * sc - z * sc
+    ];
+  }
+
+  var c = {
+    fbl: proj(0,  0,  0), fbr: proj(L,  0,  0),
+    ftl: proj(0,  W,  0), ftr: proj(L,  W,  0),
+    tbl: proj(0,  0,  H), tbr: proj(L,  0,  H),
+    ttl: proj(0,  W,  H), ttr: proj(L,  W,  H)
+  };
+
+  function ln(a, b, color, width, dash) {
+    return '<line x1="'+a[0]+'" y1="'+a[1]+'" x2="'+b[0]+'" y2="'+b[1]+'"'
+      + ' stroke="'+color+'" stroke-width="'+width+'"'
+      + (dash ? ' stroke-dasharray="'+dash+'"' : '') + '/>';
+  }
+  function pg(pts, fill, stroke) {
+    return '<polygon points="'+pts.map(function(p){return p[0]+','+p[1]}).join(' ')+'"'
+      + ' fill="'+fill+'" stroke="'+stroke+'" stroke-width="1.5"/>';
+  }
+  function dim(a, b, text, offset, side) {
+    var mx = (a[0]+b[0])/2, my = (a[1]+b[1])/2;
+    var dx = b[0]-a[0], dy = b[1]-a[1];
+    var len = Math.sqrt(dx*dx+dy*dy);
+    var nx = -dy/len * offset, ny = dx/len * offset;
+    var p1 = [a[0]+nx, a[1]+ny], p2 = [b[0]+nx, b[1]+ny];
+    var anchor = 'middle', tx = mx+nx, ty = my+ny;
+    if (side === 'left')  { tx -= 12; anchor = 'end'; }
+    if (side === 'right') { tx += 12; anchor = 'start'; }
+    if (side === 'top')   { ty -= 8;  anchor = 'middle'; }
+    return ln(a, p1, '#64748b', 0.6)
+         + ln(b, p2, '#64748b', 0.6)
+         + ln(p1, p2, '#64748b', 0.8)
+         + '<text x="'+tx+'" y="'+ty+'" text-anchor="'+anchor+'" fill="#2563eb" font-size="12" font-weight="700">'+text+'</text>';
+  }
+
+  var s = '';
+  s += pg([c.fbl, c.fbr, c.tbr, c.tbl], 'rgba(22,163,74,.08)', 'rgba(22,163,74,.3)');
+  s += pg([c.fbl, c.ftl, c.ttl, c.tbl], 'rgba(22,163,74,.06)', 'rgba(22,163,74,.25)');
+  s += pg([c.fbl, c.fbr, c.ftr, c.ftl], 'rgba(37,99,235,.10)', 'rgba(37,99,235,.35)');
+  s += pg([c.ftl, c.ftr, c.ttr, c.ttl], 'rgba(22,163,74,.12)', 'rgba(22,163,74,.4)');
+  s += pg([c.fbr, c.ftr, c.ttr, c.tbr], 'rgba(22,163,74,.10)', 'rgba(22,163,74,.35)');
+
+  s += ln(c.fbl, c.tbl, '#94a3b8', 0.7, '4,3');
+  s += ln(c.tbl, c.tbr, '#94a3b8', 0.7, '4,3');
+  s += ln(c.tbr, c.fbr, '#94a3b8', 0.7, '4,3');
+
+  s += ln(c.fbl, c.fbr, '#0f172a', 1.5);
+  s += ln(c.fbr, c.ftr, '#0f172a', 1.5);
+  s += ln(c.ftr, c.ftl, '#0f172a', 1.5);
+  s += ln(c.ftl, c.fbl, '#0f172a', 1.5);
+  s += ln(c.ftl, c.ttl, '#0f172a', 1.5);
+  s += ln(c.ftr, c.ttr, '#0f172a', 1.5);
+  s += ln(c.fbr, c.tbr, '#0f172a', 1.5);
+  s += ln(c.ttl, c.ttr, '#0f172a', 1.5);
+  s += ln(c.ttr, c.tbr, '#0f172a', 1.5);
+
+  s += dim(c.fbl, c.fbr, fmt(L), -18, 'bottom');
+  s += dim(c.fbl, c.ftl, fmt(W), -18, 'left');
+  s += dim(c.ftl, c.ttl, fmt(H), 16, 'left');
+
+  svg.innerHTML = s;
+}
+
+/* ═══════════════════════ SVG TEMPLATE RENDER ═══════════════════════ */
+
+var FILL = {bottom:'rgba(37,99,235,.12)', side:'rgba(22,163,74,.09)'};
+var STROKE = {bottom:'rgba(37,99,235,.40)', side:'rgba(22,163,74,.32)'};
+
+function svgPoly(pts, t, ox, oy, s) {
+  return pts.map(function(v,i){
+    var x=(v[0]-t.minX)*s+ox, y=(t.maxY-v[1])*s+oy;
+    return (i===0?'M':'L')+x.toFixed(1)+','+y.toFixed(1);
+  }).join(' ')+'Z';
+}
+
+function renderSVG(boxT, lidT, boxL, boxW, boxH, lidL, lidW, lidH) {
+  var PAD=50, GAP=60;
+  var totalW = boxT.w + GAP + lidT.w;
+  var totalH = Math.max(boxT.h, lidT.h);
+  var maxW=800, maxH=480;
+  var s = Math.min((maxW-2*PAD)/totalW, (maxH-2*PAD)/totalH, 2);
+  var svgW = Math.ceil(totalW*s + 2*PAD);
+  var svgH = Math.ceil(totalH*s + 2*PAD);
+
+  var boxOY = PAD + (maxH-2*PAD - boxT.h*s)/2;
+  var lidOY = PAD + (maxH-2*PAD - lidT.h*s)/2;
+  var boxOX = PAD;
+  var lidOX = PAD + boxT.w*s + GAP*s;
+
+  function tmplSVG(t, label, ox, oy) {
+    var out = '';
+    for(var i=0;i<t.panels.length;i++){
+      var pn=t.panels[i];
+      out += '<path d="'+svgPoly(pn.p, t, ox, oy, s)+'" fill="'+FILL[pn.t]+'" stroke="'+STROKE[pn.t]+'" stroke-width="1"/>';
+    }
+    for(var j=0;j<t.folds.length;j++){
+      var f=t.folds[j];
+      var x1=(f[0]-t.minX)*s+ox, y1=(t.maxY-f[1])*s+oy;
+      var x2=(f[2]-t.minX)*s+ox, y2=(t.maxY-f[3])*s+oy;
+      out += '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="#dc2626" stroke-width="1.2" stroke-dasharray="8,4" opacity=".7"/>';
+    }
+    for(var k=0;k<t.outer.length;k++){
+      var a=t.outer[k], b=t.outer[(k+1)%t.outer.length];
+      var ax2=(a[0]-t.minX)*s+ox, ay2=(t.maxY-a[1])*s+oy;
+      var bx2=(b[0]-t.minX)*s+ox, by2=(t.maxY-b[1])*s+oy;
+      out += '<line x1="'+ax2+'" y1="'+ay2+'" x2="'+bx2+'" y2="'+by2+'" stroke="#0f172a" stroke-width="2.2"/>';
+    }
+    for(var m=0;m<t.panels.length;m++){
+      var pl=t.panels[m];
+      var cx=0, cy=0;
+      for(var nn=0;nn<pl.p.length;nn++){cx+=pl.p[nn][0];cy+=pl.p[nn][1];}
+      cx/=4; cy/=4;
+      var lx=(cx-t.minX)*s+ox, ly=(t.maxY-cy)*s+oy;
+      out += '<text x="'+lx+'" y="'+ly+'" text-anchor="middle" dominant-baseline="central" fill="#64748b" font-size="11" font-weight="500">'+pl.lb+'</text>';
+    }
+    var tx = ox + (t.w*s)/2;
+    out += '<text x="'+tx+'" y="'+(oy-14)+'" text-anchor="middle" fill="#0f172a" font-size="13" font-weight="700">'+label+'</text>';
+    return out;
+  }
+
+  var svg = document.getElementById('svg');
+  svg.setAttribute('width', svgW);
+  svg.setAttribute('height', svgH);
+  svg.setAttribute('viewBox', '0 0 '+svgW+' '+svgH);
+  svg.innerHTML = '<rect width="'+svgW+'" height="'+svgH+'" fill="#fff"/>'
+    + tmplSVG(boxT, 'Коробка  '+fmt(boxL)+' × '+fmt(boxW)+' × '+fmt(boxH), boxOX, boxOY)
+    + tmplSVG(lidT, 'Крышка  '+fmt(lidL)+' × '+fmt(lidW)+' × '+fmt(lidH), lidOX, lidOY);
+
+  document.getElementById('sizeInfo').textContent =
+    'Размеры шаблонов: коробка '+fmt(boxT.w)+' × '+fmt(boxT.h)+' мм, крышка '+fmt(lidT.w)+' × '+fmt(lidT.h)+' мм';
+}
+
+/* ═══════════════════════ MAIN ═══════════════════════ */
+
+function val(id){ return Math.max(parseFloat(document.getElementById(id).value)||0, parseFloat(document.getElementById(id).min)||0); }
+function setVal(id, v){ document.getElementById(id).value = Math.round(v*10)/10; }
+function fmt(v){ return v%1===0 ? String(v) : v.toFixed(1); }
+
+// Автоматический подбор размеров коробки под товар
+function autoCalc() {
+  var pL = val('prodL'), pW = val('prodW'), pH = val('prodH');
+  var padS = val('padSide'), padT = val('padTop');
+  var T = val('inT');
+
+  // Внутренний размер = размер товара + зазор с каждой стороны
+  var newL = pL + 2 * padS;
+  var newW = pW + 2 * padS;
+  var newH = pH + padT + T; // товар + зазор сверху + толщина дна
+
+  setVal('inL', newL);
+  setVal('inW', newW);
+  setVal('inH', newH);
+
+  update();
+  showToast('Размер коробки подобран: ' + fmt(newL) + ' × ' + fmt(newW) + ' × ' + fmt(newH) + ' мм');
+}
+
+function update() {
+  var L=val('inL'), W=val('inW'), H=val('inH'), T=val('inT'), LH=val('inLH');
+  var C = Math.max(0, +(val('inC')).toFixed(1));
+  var lL = L + 2*T + 2*C;
+  var lW = W + 2*T + 2*C;
+
+  document.getElementById('dimL').textContent = fmt(L);
+  document.getElementById('dimW').textContent = fmt(W);
+  document.getElementById('dimH').textContent = fmt(H);
+
+  render3DBox(L, W, H, T);
+
+  // Показываем габариты товара если они заданы
+  var pL = val('prodL'), pW = val('prodW'), pH = val('prodH');
+  var prodInfo = '';
+  if (pL > 0 && pW > 0 && pH > 0) {
+    var fitL = L - pL, fitW = W - pW, fitH = H - pH;
+    var fitOk = fitL >= 0 && fitW >= 0 && fitH >= 0;
+    prodInfo = '<b>Товар:</b> '+fmt(pL)+' × '+fmt(pW)+' × '+fmt(pH)+' мм<br>';
+    prodInfo += '<b>Свободное место:</b> '+fmt(fitL)+' × '+fmt(fitW)+' × '+fmt(fitH)+' мм ';
+    prodInfo += fitOk ? '✅' : '⚠️ <span style="color:#dc2626">Товар не поместится!</span>';
+    prodInfo += '<br>';
+  }
+
+  document.getElementById('info').innerHTML =
+    (prodInfo ? prodInfo + '<br>' : '') +
+    '<b>Внутренний размер:</b> '+fmt(L)+' × '+fmt(W)+' × '+fmt(H)+' мм<br>'+
+    '<b>Внешний размер:</b> '+fmt(L+2*T)+' × '+fmt(W+2*T)+' × '+fmt(H+2*T)+' мм<br>'+
+    '<b>Зазор крышки:</b> '+fmt(C)+' мм<br>'+
+    '<b>Дно крышки:</b> '+fmt(lL)+' × '+fmt(lW)+' мм';
+
+  var boxT = templateGeometry(L, W, H);
+  var lidT = templateGeometry(lL, lW, LH);
+  renderSVG(boxT, lidT, L, W, H, lL, lW, LH);
+
+  window._boxT = boxT;
+  window._lidT = lidT;
+}
+
+function download(mode) {
+  var boxT=window._boxT, lidT=window._lidT;
+  var templates = [];
+
+  if(mode==='box'||mode==='both'){
+    templates.push({ tmpl: boxT, ox: -boxT.minX, oy: -boxT.minY });
+  }
+  if(mode==='lid'||mode==='both'){
+    var lx = mode==='both' ? boxT.w + 50 - lidT.minX : -lidT.minX;
+    templates.push({ tmpl: lidT, ox: lx, oy: -lidT.minY });
+  }
+
+  var dxf = buildDXF(templates);
+  var fname = mode==='box'?'box.dxf':mode==='lid'?'lid.dxf':'box_and_lid.dxf';
+  var blob = new Blob([dxf],{type:'application/dxf'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = fname;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('Скачан ' + fname);
+}
+
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 2500);
+}
+
+document.querySelectorAll('input').forEach(function(el){
+  el.addEventListener('input', update);
+});
+
+update();
+</script>
+</body>
+</html>
